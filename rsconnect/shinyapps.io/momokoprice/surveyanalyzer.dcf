@@ -1,0 +1,10 @@
+name: surveyanalyzer
+title:
+username:
+account: momokoprice
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 240384
+bundleId: 1099289
+url: https://momokoprice.shinyapps.io/surveyanalyzer/
+when: 1511804121.20766
