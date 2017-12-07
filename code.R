@@ -24,7 +24,7 @@ Question <- mutate(Question, Question_Index = paste("Q", rn, sep="")) %>%
 
 # Tidy dataset into 2-column table of Questions and Answers  
 voc <- raw_voc %>%
-  gather(Question, Answer, How.did.you.first.hear.about.SPS.Commerce.:What.would.you.say.about.SPS.Commerce.to.persuade.a.colleague.to.give.it.a.try.)
+  gather(key = Question, value = Answer)
 
 voc <- merge(Question, voc)
 
@@ -32,6 +32,14 @@ voc <- merge(Question, voc)
 voc$Question <- gsub("\\.", " ", voc$Question)
 voc$Question <- paste(voc$Question, "?", sep="")
 voc$Question <- gsub(" \\?", "?", voc$Question)
+
+# find and remove answers that match dates and numbers
+
+
+
+
+
+
 
 
 # Tokenize each Answer into words
@@ -66,7 +74,7 @@ long_questions <- merge(by_question, by_long) %>%
   filter(Percent_Long > 0.3) 
 
 long_questions <-  merge(long_questions, voc) %>%
-  select("Number", "Question", "Question_Index", "Answer", "WordCount")
+  select("Question", "Question_Index", "Answer", "WordCount")
 
 long_questions <- as.tibble(long_questions)
     
@@ -98,51 +106,5 @@ by_question <- total_df %>%
     "Avg Sentiment" = mean(sentiment)
   )
 
-by_question$TabID <- paste("Q", rownames(by_question), sep="")
-    
-    
-ntabs <- length(by_question$TabID)
 
-
-updateTabsetPanel(session, "tabs",
-                  selected = "panel2")
- 
-output$questions <- renderUI({
-  output$answer1 <- renderDataTable(by_question)
-  tagList(
-    tags$h3("Long-Form Questions in this Survey"),
-    tags$div(
-      dataTableOutput("answer1")
-    )
-  )
-})
-
-# END OF: Create question summary data set ----
-
-# START OF: Create top10 data sets -----
-
-
-
-# END OF: Create top10 data sets -----
-
-
-# Dynamically append a tab
-lapply(1:length(senti), 
-       function(i) {
-         insertTab(inputId = "tabs",
-            tabPanel(by_question$TabID[i], 
-                     value=paste("panel", 2+i, sep=""), 
-                     renderUI(
-                       tagList(
-                         tags$h3(unique(senti[[i]]$Question)),
-                         tags$div(
-                           renderDataTable(head(select(senti[[i]], c("Top 10 Positive Answers" = Answer, "Sentiment" = sentiment)),10))
-                         )
-                       )
-                     ) 
-                    ),
-            target = paste("panel", 1+i, sep=""),
-            position = "after"
-  )}
-
-)
+# Make Sure to Not overwrite any app code when pasting back into App.r
