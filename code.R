@@ -12,11 +12,13 @@ library(magrittr)
 
 
 raw_voc <- read.csv("www/data.csv")
-      
+
+
+### COPY PASTE START -------    
 
 # ORGANIZE DATA
 
-# Create new column with question numbers
+# Create new df with question numbers as index
 Question <- data.frame(Question = names(raw_voc))
 setDT(Question, keep.rownames = TRUE)[]
 Question <- mutate(Question, Question_Index = paste("Q", rn, sep="")) %>%
@@ -28,18 +30,10 @@ voc <- raw_voc %>%
 
 voc <- merge(Question, voc)
 
-# remove periods from questions
+# remove periods from questions, add question marks at end
 voc$Question <- gsub("\\.", " ", voc$Question)
 voc$Question <- paste(voc$Question, "?", sep="")
 voc$Question <- gsub(" \\?", "?", voc$Question)
-
-# find and remove answers that match dates and numbers
-
-
-
-
-
-
 
 
 # Tokenize each Answer into words
@@ -50,13 +44,14 @@ voc$Words <- tokenize_words(voc$Answer)
 
 voc$WordCount <- sapply(voc$Words, length)
     
-# For each question count # of Answers with word count > 4
+# For each question count # of Answers with word count > 6 (any less could end up missing date/time responses)
 
-voc <- voc %>% mutate(TextForm = ifelse(WordCount > 4, "Long", "Short"))
+voc <- voc %>% mutate(TextForm = ifelse(WordCount > 6, "Long", "Short"))
 
-# For each question, calculate % of answers with word count > 4
-# Filter only questions with 30+% answers word count > 4
-# Save 1 dataframe of >4 word counts (long form answers), 1 dataframe of 4 or les word counts (other kinds of questions)
+# For each question, calculate % of answers with word count > 6 
+# Filter only questions with 30+% answers word count > 6 
+# Save 1 dataframe of >4 word counts (long form answers), 1 dataframe of count > 6 word counts (other kinds of questions)
+
 
 by_question <- voc %>% 
   group_by(Question_Index) %>%
@@ -95,16 +90,6 @@ getSent <- function(x) {
     
 senti <- lapply(question_dfs, getSent)
 
-
-# START OF: Create question summary data set ----
-total_df <- rbindlist(senti)
-by_question <- total_df %>%
-  group_by(Question) %>%
-  summarize(
-    "Number of Responses" = n(),
-    "Avg Word Count" = round(mean(WordCount), 0),
-    "Avg Sentiment" = mean(sentiment)
-  )
-
+### COPY PASTE END -------
 
 # Make Sure to Not overwrite any app code when pasting back into App.r

@@ -9,7 +9,6 @@ library(sentimentr)
 library(magrittr)
 
 
-# Additional flow: 
 
 # Display long-form question,, average wordcount, # of responses each upon upload
 
@@ -149,6 +148,8 @@ server <- function(input, output, session) {
                         quote = input$quote)
     # start of code that processes the data
     
+    ### COPY PASTE START -------    
+    
     # ORGANIZE DATA
     
     # Create new column with question numbers
@@ -222,6 +223,8 @@ server <- function(input, output, session) {
     
     senti <- lapply(question_dfs, getSent)
     
+    ### COPY PASTE END ------- 
+    
     
     # START OF: Create question summary data set ----
     total_df <- rbindlist(senti)
@@ -257,10 +260,7 @@ server <- function(input, output, session) {
     # START OF: Create top10 data sets -----
     
     
-    
-    # END OF: Create top10 data sets -----
-    
-    
+   
     # Dynamically append a tab
     lapply(1:length(senti), 
            function(i) {
@@ -283,5 +283,10 @@ server <- function(input, output, session) {
     )
   })
 }
+
+
+# END OF: Create top10 data sets -----
+
+
 # Run the app ----
 shinyApp(ui, server)
