@@ -152,19 +152,23 @@ server <- function(input, output, session) {
     
     # ORGANIZE DATA
     
-    # Create new column with question numbers
+    # Create new df with question numbers as index
     Question <- data.frame(Question = names(raw_voc))
     setDT(Question, keep.rownames = TRUE)[]
     Question <- mutate(Question, Question_Index = paste("Q", rn, sep="")) %>%
       select(Question_Index:Question)
     
+    # Turn rownames into element ids
+    setDT(raw_voc, keep.rownames = TRUE)[]
+    raw_voc <- rename(raw_voc, "element_id" = rn)
+    
     # Tidy dataset into 2-column table of Questions and Answers  
     voc <- raw_voc %>%
-      gather(Question, Answer, How.did.you.first.hear.about.SPS.Commerce.:What.would.you.say.about.SPS.Commerce.to.persuade.a.colleague.to.give.it.a.try.)
+      gather(key = Question, value = Answer, -element_id)
     
     voc <- merge(Question, voc)
     
-    # remove periods from questions
+    # remove periods from questions, add question marks at end
     voc$Question <- gsub("\\.", " ", voc$Question)
     voc$Question <- paste(voc$Question, "?", sep="")
     voc$Question <- gsub(" \\?", "?", voc$Question)
@@ -178,13 +182,14 @@ server <- function(input, output, session) {
     
     voc$WordCount <- sapply(voc$Words, length)
     
-    # For each question count # of Answers with word count > 4
+    # For each question count # of Answers with word count > 6 (any less could end up missing date/time responses)
     
-    voc <- voc %>% mutate(TextForm = ifelse(WordCount > 4, "Long", "Short"))
+    voc <- voc %>% mutate(TextForm = ifelse(WordCount > 6, "Long", "Short"))
     
-    # For each question, calculate % of answers with word count > 4
-    # Filter only questions with 30+% answers word count > 4
-    # Save 1 dataframe of >4 word counts (long form answers), 1 dataframe of 4 or les word counts (other kinds of questions)
+    # For each question, calculate % of answers with word count > 6 
+    # Filter only questions with 30+% answers word count > 6 
+    # Save 1 dataframe of >4 word counts (long form answers), 1 dataframe of count > 6 word counts (other kinds of questions)
+    
     
     by_question <- voc %>% 
       group_by(Question_Index) %>%
@@ -202,7 +207,7 @@ server <- function(input, output, session) {
       filter(Percent_Long > 0.3) 
     
     long_questions <-  merge(long_questions, voc) %>%
-      select("Number", "Question", "Question_Index", "Answer", "WordCount")
+      select("element_id", "Question", "Question_Index", "Answer", "WordCount")
     
     long_questions <- as.tibble(long_questions)
     
@@ -215,7 +220,6 @@ server <- function(input, output, session) {
     
     getSent <- function(x) {
       sent <- sentiment(get_sentences(x$Answer))
-      x <- rename(x, element_id = Number)
       sorted_x <- merge(x, sent, by="element_id") %>%
         select(-sentence_id) %>%
         arrange(desc(sentiment))
@@ -223,7 +227,9 @@ server <- function(input, output, session) {
     
     senti <- lapply(question_dfs, getSent)
     
-    ### COPY PASTE END ------- 
+    ### COPY PASTE END -------
+    
+    # Make Sure to Not overwrite any app code when pasting back into App.r
     
     
     # START OF: Create question summary data set ----

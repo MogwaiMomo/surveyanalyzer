@@ -24,9 +24,13 @@ setDT(Question, keep.rownames = TRUE)[]
 Question <- mutate(Question, Question_Index = paste("Q", rn, sep="")) %>%
   select(Question_Index:Question)
 
+# Turn rownames into element ids
+setDT(raw_voc, keep.rownames = TRUE)[]
+raw_voc <- rename(raw_voc, "element_id" = rn)
+
 # Tidy dataset into 2-column table of Questions and Answers  
 voc <- raw_voc %>%
-  gather(key = Question, value = Answer)
+  gather(key = Question, value = Answer, -element_id)
 
 voc <- merge(Question, voc)
 
@@ -69,7 +73,7 @@ long_questions <- merge(by_question, by_long) %>%
   filter(Percent_Long > 0.3) 
 
 long_questions <-  merge(long_questions, voc) %>%
-  select("Question", "Question_Index", "Answer", "WordCount")
+  select("element_id", "Question", "Question_Index", "Answer", "WordCount")
 
 long_questions <- as.tibble(long_questions)
     
@@ -82,7 +86,6 @@ question_dfs <- split(long_questions, long_questions$Question_Index)
 
 getSent <- function(x) {
   sent <- sentiment(get_sentences(x$Answer))
-  x <- rename(x, element_id = Number)
   sorted_x <- merge(x, sent, by="element_id") %>%
     select(-sentence_id) %>%
     arrange(desc(sentiment))
