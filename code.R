@@ -76,6 +76,11 @@ long_questions <-  merge(long_questions, voc) %>%
   select("element_id", "Question", "Question_Index", "Answer", "WordCount")
 
 long_questions <- as.tibble(long_questions)
+
+
+
+
+
     
 # We now have a subset of long-form survey responses to mine for insights. Time to clean & transform the data. 
 
