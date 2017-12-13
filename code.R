@@ -11,7 +11,7 @@ library(sentimentr)
 library(magrittr)
 
 
-raw_voc <- read.csv("www/data.csv")
+raw_voc <- read.csv("www/data.csv", na.strings = c("", " ", "None", "n/a"))
 
 
 ### COPY PASTE START -------    
@@ -21,7 +21,7 @@ raw_voc <- read.csv("www/data.csv")
 # Create new df with question numbers as index
 Question <- data.frame(Question = names(raw_voc))
 setDT(Question, keep.rownames = TRUE)[]
-Question <- mutate(Question, Question_Index = paste("Q", rn, sep="")) %>%
+Question <- mutate(Question, Question_Index = as.numeric(rn)) %>%
   select(Question_Index:Question)
 
 # Turn rownames into element ids
@@ -48,40 +48,38 @@ voc$Words <- tokenize_words(voc$Answer)
 
 voc$WordCount <- sapply(voc$Words, length)
     
-# For each question count # of Answers with word count > 6 (any less could end up missing date/time responses)
 
-voc <- voc %>% mutate(TextForm = ifelse(WordCount > 6, "Long", "Short"))
-
-# For each question, calculate % of answers with word count > 6 
-# Filter only questions with 30+% answers word count > 6 
-# Save 1 dataframe of >4 word counts (long form answers), 1 dataframe of count > 6 word counts (other kinds of questions)
-
+# For each question, determine the mean and sd. Drop any questions with a word count mean of < 4 AND sd < 4 
 
 by_question <- voc %>% 
   group_by(Question_Index) %>%
-  summarize(Question_Count = n())
+  summarize(Question_Count = n(), 
+            WC_Mean = mean(WordCount),
+            WC_StatDev = sd(WordCount)
+            )
 
-by_long <- voc %>% 
-  group_by(Question_Index, TextForm) %>%
-  summarize(TextForm_Count = n())
+by_question <- by_question %>%
+  mutate(TextForm = ifelse((WC_Mean > 3 & WC_StatDev > 3), "Long", "Short"))
 
 voc <- merge(voc, by_question)
 
-long_questions <- merge(by_question, by_long) %>%
-  filter(TextForm == "Long") %>%
-  mutate(Percent_Long = TextForm_Count / Question_Count) %>%
-  filter(Percent_Long > 0.3) 
 
-long_questions <-  merge(long_questions, voc) %>%
+# by_long <- voc %>% 
+#   group_by(Question_Index, TextForm) %>%
+#   summarize(TextForm_Count = n())
+# 
+# long_questions <- merge(by_question, by_long) %>%
+#   filter(TextForm == "Long") %>%
+#   mutate(Percent_Long = TextForm_Count / Question_Count) %>%
+#   filter(Percent_Long > 0.3) 
+
+long_questions <- voc %>%
+  filter(TextForm == "Long") %>%
   select("element_id", "Question", "Question_Index", "Answer", "WordCount")
 
 long_questions <- as.tibble(long_questions)
 
 
-
-
-
-    
 # We now have a subset of long-form survey responses to mine for insights. Time to clean & transform the data. 
 
 # split long_questions into one df per question:
