@@ -201,16 +201,6 @@ server <- function(input, output, session) {
     
     voc <- merge(voc, by_question)
     
-    
-    # by_long <- voc %>% 
-    #   group_by(Question_Index, TextForm) %>%
-    #   summarize(TextForm_Count = n())
-    # 
-    # long_questions <- merge(by_question, by_long) %>%
-    #   filter(TextForm == "Long") %>%
-    #   mutate(Percent_Long = TextForm_Count / Question_Count) %>%
-    #   filter(Percent_Long > 0.3) 
-    
     long_questions <- voc %>%
       filter(TextForm == "Long") %>%
       select("element_id", "Question", "Question_Index", "Answer", "WordCount")
